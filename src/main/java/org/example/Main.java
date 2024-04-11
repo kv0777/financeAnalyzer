@@ -1,19 +1,106 @@
 package org.example;
 
-// Press Shift twice to open the Search Everywhere dialog and type `show whitespaces`,
-// then press Enter. You can now see whitespace characters in your code.
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+class Transaction {
+    private String date;
+    private double amount;
+    private String category;
+
+    public Transaction(String date, double amount, String category) {
+        this.date = date;
+        this.amount = amount;
+        this.category = category;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public double getAmount() {
+        return amount;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+}
+
+class CSVReader {
+    public static List<Transaction> readTransactionsFromCSV(String filePath) throws IOException {
+        List<Transaction> transactions = new ArrayList<>();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            br.readLine(); // Пропускаємо заголовок файлу
+            while ((line = br.readLine()) != null) {
+                String[] data = line.split(",");
+                String date = data[0];
+                double amount = Double.parseDouble(data[1]);
+                String category = data[2];
+                transactions.add(new Transaction(date, amount, category));
+            }
+        }
+
+        return transactions;
+    }
+}
+
+class TransactionAnalyzer {
+    public static double calculateTotalBalance(List<Transaction> transactions) {
+        double totalBalance = 0;
+        for (Transaction transaction : transactions) {
+            totalBalance += transaction.getAmount();
+        }
+        return totalBalance;
+    }
+
+    public static Map<String, Integer> countTransactionsByMonth(List<Transaction> transactions) {
+        Map<String, Integer> transactionsByMonth = new HashMap<>();
+        for (Transaction transaction : transactions) {
+            String[] dateParts = transaction.getDate().split("-");
+            String month = dateParts[1];
+            transactionsByMonth.put(month, transactionsByMonth.getOrDefault(month, 0) + 1);
+        }
+        return transactionsByMonth;
+    }
+}
+
+class ReportGenerator {
+    public static void generateReport(double totalBalance, Map<String, Integer> transactionsByMonth) {
+        System.out.println("Total balance: " + totalBalance);
+        System.out.println("Transactions by month:");
+        for (Map.Entry<String, Integer> entry : transactionsByMonth.entrySet()) {
+            System.out.println("Month: " + entry.getKey() + ", Transactions: " + entry.getValue());
+        }
+    }
+}
+
 public class Main {
     public static void main(String[] args) {
-        // Press Alt+Enter with your caret at the highlighted text to see how
-        // IntelliJ IDEA suggests fixing it.
-        System.out.printf("Hello and welcome!");
+        String fileName = "transactions.csv";
+        String filePath = System.getProperty("user.dir") + "/" + fileName;
 
-        // Press Shift+F10 or click the green arrow button in the gutter to run the code.
-        for (int i = 1; i <= 5; i++) {
+        try {
+            List<Transaction> transactions = CSVReader.readTransactionsFromCSV(filePath);
 
-            // Press Shift+F9 to start debugging your code. We have set one breakpoint
-            // for you, but you can always add more by pressing Ctrl+F8.
-            System.out.println("i = " + i);
+            // Розрахунок загального балансу
+            double totalBalance = TransactionAnalyzer.calculateTotalBalance(transactions);
+
+            // Підрахунок транзакцій за місяць
+            Map<String, Integer> transactionsByMonth = TransactionAnalyzer.countTransactionsByMonth(transactions);
+
+            // Генерація звіту
+            ReportGenerator.generateReport(totalBalance, transactionsByMonth);
+
+        } catch (IOException e) {
+            System.err.println("Error reading CSV file: " + e.getMessage());
         }
     }
 }
